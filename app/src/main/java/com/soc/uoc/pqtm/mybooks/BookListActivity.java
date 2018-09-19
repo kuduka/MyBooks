@@ -106,15 +106,33 @@ public class BookListActivity extends AppCompatActivity {
         }
 
         @Override
+        public int getItemViewType(int position) {
+            if (position % 2 == 0) {
+                return 0;
+            }
+            else{
+                return 1;
+            }
+        }
+
+        @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            View view = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.book_list_content, parent, false);
-            return new ViewHolder(view);
+
+            if (viewType == 0) {
+                View view = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.book_list_content_odd, parent, false);
+                return new ViewHolder(view);
+            }
+            else {
+                View view = LayoutInflater.from(parent.getContext())
+                        .inflate(R.layout.book_list_content_even, parent, false);
+                return new ViewHolder(view);
+            }
         }
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
-            holder.mIdView.setText(String.valueOf(mValues.get(position).getId()));
+            holder.mIdView.setText(String.valueOf(mValues.get(position).getTitle()));
             holder.mContentView.setText(mValues.get(position).getAuthor());
 
             holder.itemView.setTag(mValues.get(position));

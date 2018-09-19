@@ -90,6 +90,13 @@ public class BookItems {
                 "11/11/1989",
                 "En un futur en que la humanitat ha colonitzat desenes de planetes en la galaxia i domina el teletransport i els viatges espacials a velocitat supralumíniques",
                 "JJJ"));
+        addBook(new BookItem(
+                12,
+                "Mecanoscrit del segon origen",
+                "Manuel de Pedrolo",
+                "12/12/1974",
+                "L'Alba i en Dídac, de 14 i 9 anys, respectivament, que viuen en un poble de Catalunya anomenat Benaura. Ells esdevenen els únics supervivents a la Terra després que uns extraterrestres eliminin pràcticament tota la humanitat. En Dídac és atacat per uns nois del poble perquè és negre. Cau a l'aigua, i l'Alba, que presencia l'escena, s'hi llança per a salvar-lo. És llavors quan apareixen uns plats voladors que ho destrueixen tot, però ells se salven perquè són dins l'aigua.",
+                "JJJ"));
     }
 
     private static void addBook(BookItems.BookItem item) {
@@ -168,6 +175,5 @@ public class BookItems {
             return this.imgurl;
         }
     }
-
 
 }
