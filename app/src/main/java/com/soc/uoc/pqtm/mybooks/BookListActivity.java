@@ -14,7 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.soc.uoc.pqtm.mybooks.dummy.DummyContent;
+import com.soc.uoc.pqtm.mybooks.models.BookItems;
 
 import java.util.List;
 
@@ -66,22 +66,22 @@ public class BookListActivity extends AppCompatActivity {
     }
 
     private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(this, DummyContent.ITEMS, mTwoPane));
+        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(this, BookItems.ITEMS, mTwoPane));
     }
 
     public static class SimpleItemRecyclerViewAdapter
             extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
 
         private final BookListActivity mParentActivity;
-        private final List<DummyContent.DummyItem> mValues;
+        private final List<BookItems.BookItem> mValues;
         private final boolean mTwoPane;
         private final View.OnClickListener mOnClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                DummyContent.DummyItem item = (DummyContent.DummyItem) view.getTag();
+                BookItems.BookItem item = (BookItems.BookItem) view.getTag();
                 if (mTwoPane) {
                     Bundle arguments = new Bundle();
-                    arguments.putString(BookDetailFragment.ARG_ITEM_ID, item.id);
+                    arguments.putString(BookDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));
                     BookDetailFragment fragment = new BookDetailFragment();
                     fragment.setArguments(arguments);
                     mParentActivity.getSupportFragmentManager().beginTransaction()
@@ -90,7 +90,7 @@ public class BookListActivity extends AppCompatActivity {
                 } else {
                     Context context = view.getContext();
                     Intent intent = new Intent(context, BookDetailActivity.class);
-                    intent.putExtra(BookDetailFragment.ARG_ITEM_ID, item.id);
+                    intent.putExtra(BookDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));
 
                     context.startActivity(intent);
                 }
@@ -98,7 +98,7 @@ public class BookListActivity extends AppCompatActivity {
         };
 
         SimpleItemRecyclerViewAdapter(BookListActivity parent,
-                                      List<DummyContent.DummyItem> items,
+                                      List<BookItems.BookItem> items,
                                       boolean twoPane) {
             mValues = items;
             mParentActivity = parent;
@@ -114,8 +114,8 @@ public class BookListActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
-            holder.mIdView.setText(mValues.get(position).id);
-            holder.mContentView.setText(mValues.get(position).content);
+            holder.mIdView.setText(String.valueOf(mValues.get(position).getId()));
+            holder.mContentView.setText(mValues.get(position).getAuthor());
 
             holder.itemView.setTag(mValues.get(position));
             holder.itemView.setOnClickListener(mOnClickListener);
