@@ -107,6 +107,7 @@ public class BookListActivity extends AppCompatActivity {
 
         @Override
         public int getItemViewType(int position) {
+            //detectem si la posició és senar o parell
             if (position % 2 == 0) {
                 return 0;
             }
@@ -117,7 +118,7 @@ public class BookListActivity extends AppCompatActivity {
 
         @Override
         public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-
+            /* Mostrem els layouts segons si son senars o parells */
             if (viewType == 0) {
                 View view = LayoutInflater.from(parent.getContext())
                         .inflate(R.layout.book_list_content_even, parent, false);
@@ -132,9 +133,9 @@ public class BookListActivity extends AppCompatActivity {
 
         @Override
         public void onBindViewHolder(final ViewHolder holder, int position) {
+            /* segons l'id del llibre agafem el tiol i l'autor i els mostrem */
             holder.mTitleView.setText(String.valueOf(mValues.get(position).getTitle()));
             holder.mAuthorView.setText(mValues.get(position).getAuthor());
-
             holder.itemView.setTag(mValues.get(position));
             holder.itemView.setOnClickListener(mOnClickListener);
         }
@@ -145,6 +146,7 @@ public class BookListActivity extends AppCompatActivity {
         }
 
         class ViewHolder extends RecyclerView.ViewHolder {
+            /* Creem el view amb les dades del titol i autor */
             final TextView mTitleView;
             final TextView mAuthorView;
 

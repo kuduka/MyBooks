@@ -12,6 +12,8 @@ import android.widget.TextView;
 
 import com.soc.uoc.pqtm.mybooks.models.BookItems;
 
+import java.text.SimpleDateFormat;
+
 /**
  * A fragment representing a single Book detail screen.
  * This fragment is either contained in a {@link BookListActivity}
@@ -57,17 +59,19 @@ public class BookDetailFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        /* Omplim la vista detallada del layout del llibre */
         View rootView = inflater.inflate(R.layout.book_detail, container, false);
+        SimpleDateFormat dformat = new SimpleDateFormat("dd/MM/yyyy");
 
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
+
             int id = getResources().getIdentifier(mItem.getImgurl(),"drawable", BuildConfig.APPLICATION_ID);
             ((ImageView) rootView.findViewById(R.id.detail_imgurl)).setImageResource(id);
             ((TextView) rootView.findViewById(R.id.detail_author)).setText(mItem.getAuthor());
             ((TextView) rootView.findViewById(R.id.detail_desc)).setText(mItem.getDesc());
-            ((TextView) rootView.findViewById(R.id.detail_dpublish)).setText(mItem.getDpublish());
+            ((TextView) rootView.findViewById(R.id.detail_dpublish)).setText(dformat.format(mItem.getDpublish()));
         }
-
         return rootView;
     }
 }
