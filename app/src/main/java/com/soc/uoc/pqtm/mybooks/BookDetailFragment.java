@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.soc.uoc.pqtm.mybooks.models.BookItems;
@@ -60,7 +61,11 @@ public class BookDetailFragment extends Fragment {
 
         // Show the dummy content as text in a TextView.
         if (mItem != null) {
-            ((TextView) rootView.findViewById(R.id.book_author)).setText(mItem.getAuthor());
+            int id = getResources().getIdentifier(mItem.getImgurl(),"drawable", BuildConfig.APPLICATION_ID);
+            ((ImageView) rootView.findViewById(R.id.detail_imgurl)).setImageResource(id);
+            ((TextView) rootView.findViewById(R.id.detail_author)).setText(mItem.getAuthor());
+            ((TextView) rootView.findViewById(R.id.detail_desc)).setText(mItem.getDesc());
+            ((TextView) rootView.findViewById(R.id.detail_dpublish)).setText(mItem.getDpublish());
         }
 
         return rootView;

@@ -10,4 +10,6 @@
     android:layout_marginRight="16dp"
     app:layoutManager="LinearLayoutManager"
     tools:context=".BookListActivity"
-    tools:listitem="@layout/book_list_content_even" />
+    tools:listitem="@layout/book_list_content_even" >
+
+</android.support.v7.widget.RecyclerView>
