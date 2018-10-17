@@ -1,49 +1,177 @@
 package com.soc.uoc.pqtm.mybooks;
 
-import android.content.Context;
-import android.content.Intent;
+import android.app.Activity;
+import android.app.Application;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
-import android.view.LayoutInflater;
+import android.util.Log;
 import android.view.View;
-import android.view.ViewGroup;
-import android.widget.TextView;
+import android.widget.Toast;
 
-import com.soc.uoc.pqtm.mybooks.models.BookItems;
+import com.blankj.utilcode.util.NetworkUtils;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.auth.AuthResult;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.GenericTypeIndicator;
+import com.google.firebase.database.ValueEventListener;
+import com.orm.SugarContext;
+import com.soc.uoc.pqtm.mybooks.adapter.BookListAdapter;
+import com.soc.uoc.pqtm.mybooks.model.BookContent;
 
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Iterator;
 
-/**
- * An activity representing a list of Books. This activity
- * has different presentations for handset and tablet-size devices. On
- * handsets, the activity presents a list of items, which when touched,
- * lead to a {@link BookDetailActivity} representing
- * item details. On tablets, the activity presents the list of items and
- * item details side-by-side using two vertical panes.
- */
 public class BookListActivity extends AppCompatActivity {
 
-    /**
-     * Whether or not the activity is in two-pane mode, i.e. running on a tablet
-     * device.
-     */
+    private static final String TAG = "LOG";
+
     private boolean mTwoPane;
+    private BookListAdapter adapter;
+    private FirebaseAuth mAuth;
+    private FirebaseDatabase database;
+    private DatabaseReference myRef;
+    private static ArrayList<BookContent.BookItem> mValues;
+    private MyActivityLifecycleCallbacks mCallbacks = new MyActivityLifecycleCallbacks();
+
+
+    public static class MyActivityLifecycleCallbacks implements Application.ActivityLifecycleCallbacks {
+
+        @Override
+        public void onActivityCreated(Activity activity, Bundle savedInstanceState) {
+
+        }
+
+        @Override
+        public void onActivityStarted(Activity activity) {
+
+        }
+
+        @Override
+        public void onActivityResumed(Activity activity) {
+
+        }
+
+        @Override
+        public void onActivityPaused(Activity activity) {
+
+        }
+
+        @Override
+        public void onActivityStopped(Activity activity) {
+            FirebaseAuth.getInstance().signOut();
+        }
+
+        @Override
+        public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
+
+        }
+
+        @Override
+        public void onActivityDestroyed(Activity activity) {
+
+        }
+    }
+
+    private void  doLogin() {
+        mAuth.signInWithEmailAndPassword("marcfite@uoc.edu", "Palangana123!")
+                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
+                    @Override
+                    public void onComplete(@NonNull Task<AuthResult> task) {
+                        if (task.isSuccessful()) {
+                            Log.d(TAG, "signInWithEmail:success");
+                            getBooks();
+                        } else {
+                            Log.w(TAG, "signInWithEmail:failure", task.getException());
+                            Toast.makeText(BookListActivity.this, "*ERROR*: No s'ha pogut autenticar l'usuari.",
+                                    Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+    }
+    public void getBooks(){
+        myRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot) {
+                GenericTypeIndicator<ArrayList<BookContent.BookItem>> t = new GenericTypeIndicator<ArrayList<BookContent.BookItem>>() {};
+                mValues = dataSnapshot.getValue(t);
+
+                Iterator<BookContent.BookItem> iterBooks = mValues.iterator();
+                Long bid = 0L;
+                while (iterBooks.hasNext()) {
+                    iterBooks.next().setId(bid);
+                    bid++;
+                }
+
+                for (BookContent.BookItem b : mValues) {
+                    if (!BookContent.exists(b)) {
+                        b.save();
+                    }
+                }
+                updateUI();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                // Failed to read value
+                Toast.makeText(BookListActivity.this, "*ERROR*: No s'ha pogut accedir a la BBDD.",
+                        Toast.LENGTH_SHORT).show();
+                Log.w(TAG, "Failed to read value.", error.toException());
+                if (!NetworkUtils.isAvailableByPing()){
+                    adapter.setItems(BookContent.getBooks());
+                }
+            }
+        });
+    }
+
+    private void updateUI (){
+        boolean warning = false;
+        RecyclerView recyclerView = findViewById(R.id.book_list);
+        adapter = new BookListAdapter(this,mValues, mTwoPane);
+        if (!NetworkUtils.isAvailableByPing()){
+            adapter.setItems(BookContent.getBooks());
+            warning = true;
+        }
+        recyclerView.setAdapter(adapter);
+        if (warning) {
+            Toast.makeText(BookListActivity.this, "*ERROR* Sense Internet, carregant BBDD local",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        getApplication().registerActivityLifecycleCallbacks(mCallbacks);
         super.onCreate(savedInstanceState);
+        SugarContext.init(this);
         setContentView(R.layout.activity_book_list);
-
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        mAuth = FirebaseAuth.getInstance();
+        database = FirebaseDatabase.getInstance();
+        myRef = database.getReference("books");
+        Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         toolbar.setTitle(getTitle());
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        final SwipeRefreshLayout swipeContainer = findViewById(R.id.swipeContainer);
+        swipeContainer.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                getBooks();
+                swipeContainer.setRefreshing(false);
+            }
+        });
+
+        FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -53,108 +181,20 @@ public class BookListActivity extends AppCompatActivity {
         });
 
         if (findViewById(R.id.book_detail_container) != null) {
-            // The detail container view will be present only in the
-            // large-screen layouts (res/values-w900dp).
-            // If this view is present, then the
-            // activity should be in two-pane mode.
             mTwoPane = true;
         }
-
-        View recyclerView = findViewById(R.id.book_list);
-        assert recyclerView != null;
-        setupRecyclerView((RecyclerView) recyclerView);
-    }
-
-    private void setupRecyclerView(@NonNull RecyclerView recyclerView) {
-        recyclerView.setAdapter(new SimpleItemRecyclerViewAdapter(this, BookItems.ITEMS, mTwoPane));
-    }
-
-    public static class SimpleItemRecyclerViewAdapter
-            extends RecyclerView.Adapter<SimpleItemRecyclerViewAdapter.ViewHolder> {
-
-        private final BookListActivity mParentActivity;
-        private final List<BookItems.BookItem> mValues;
-        private final boolean mTwoPane;
-        private final View.OnClickListener mOnClickListener = new View.OnClickListener() {
+        FirebaseAuth.AuthStateListener authStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
-            public void onClick(View view) {
-                BookItems.BookItem item = (BookItems.BookItem) view.getTag();
-                if (mTwoPane) {
-                    Bundle arguments = new Bundle();
-                    arguments.putString(BookDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));
-                    BookDetailFragment fragment = new BookDetailFragment();
-                    fragment.setArguments(arguments);
-                    mParentActivity.getSupportFragmentManager().beginTransaction()
-                            .replace(R.id.book_detail_container, fragment)
-                            .commit();
-                } else {
-                    Context context = view.getContext();
-                    Intent intent = new Intent(context, BookDetailActivity.class);
-                    intent.putExtra(BookDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));
-
-                    context.startActivity(intent);
-                }
+            public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
+                firebaseAuth.getCurrentUser();
             }
         };
-
-        SimpleItemRecyclerViewAdapter(BookListActivity parent,
-                                      List<BookItems.BookItem> items,
-                                      boolean twoPane) {
-            mValues = items;
-            mParentActivity = parent;
-            mTwoPane = twoPane;
+        mAuth.addAuthStateListener(authStateListener);
+        if (!NetworkUtils.isAvailableByPing()) {
+            updateUI();
         }
-
-        @Override
-        public int getItemViewType(int position) {
-            //detectem si la posició és senar o parell
-            if (position % 2 == 0) {
-                return 0;
-            }
-            else{
-                return 1;
-            }
-        }
-
-        @Override
-        public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            /* Mostrem els layouts segons si son senars o parells */
-            if (viewType == 0) {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.book_list_content_even, parent, false);
-                return new ViewHolder(view);
-            }
-            else {
-                View view = LayoutInflater.from(parent.getContext())
-                        .inflate(R.layout.book_list_content_odd, parent, false);
-                return new ViewHolder(view);
-            }
-        }
-
-        @Override
-        public void onBindViewHolder(final ViewHolder holder, int position) {
-            /* segons l'id del llibre agafem el tiol i l'autor i els mostrem */
-            holder.mTitleView.setText(String.valueOf(mValues.get(position).getTitle()));
-            holder.mAuthorView.setText(mValues.get(position).getAuthor());
-            holder.itemView.setTag(mValues.get(position));
-            holder.itemView.setOnClickListener(mOnClickListener);
-        }
-
-        @Override
-        public int getItemCount() {
-            return mValues.size();
-        }
-
-        class ViewHolder extends RecyclerView.ViewHolder {
-            /* Creem el view amb les dades del titol i autor */
-            final TextView mTitleView;
-            final TextView mAuthorView;
-
-            ViewHolder(View view) {
-                super(view);
-                mTitleView = (TextView) view.findViewById(R.id.title);
-                mAuthorView = (TextView) view.findViewById(R.id.detail_author);
-            }
+        else {
+            doLogin();
         }
     }
 }
