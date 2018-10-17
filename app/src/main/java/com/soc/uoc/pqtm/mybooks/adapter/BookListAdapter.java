@@ -16,17 +16,17 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.soc.uoc.pqtm.mybooks.model.BookContent;
-import java.util.ArrayList;
+import java.util.List;
 
 
 public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHolder> {
 
-    private ArrayList<BookContent.BookItem> mValues;
     private final BookListActivity mContext;
     private boolean mTwoPane = false;
+    private List<BookContent.BookItem> mValues;
 
-    public void setBooks(ArrayList<BookContent.BookItem> mValues) {
-        this.mValues = mValues;
+    public void setItems(List<BookContent.BookItem> items) {
+        this.mValues = items;
     }
 
     private final View.OnClickListener mOnClickListener = new View.OnClickListener() {
@@ -35,7 +35,6 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             BookContent.BookItem item = (BookContent.BookItem) view.getTag();
             if (mTwoPane) {
                 Bundle arguments = new Bundle();
-                arguments.putSerializable("lbooks", mValues);
                 arguments.putString(BookDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));
                 BookDetailFragment fragment = new BookDetailFragment();
                 fragment.setArguments(arguments);
@@ -45,18 +44,15 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
             } else {
                 Context context = view.getContext();
                 Intent intent = new Intent(context, BookDetailActivity.class);
-                Bundle arguments = new Bundle();
-                arguments.putSerializable("lbooks", mValues);
-                intent.putExtras(arguments);
                 intent.putExtra(BookDetailFragment.ARG_ITEM_ID, String.valueOf(item.getId()));
                 mContext.startActivity(intent);
             }
         }
     };
 
-    public BookListAdapter(BookListActivity mContext, ArrayList<BookContent.BookItem> mValues, boolean mTwoPane) {
+    public BookListAdapter(BookListActivity mContext, List<BookContent.BookItem> items, boolean mTwoPane) {
         this.mContext = mContext;
-        this.mValues = mValues;
+        this.mValues = items;
         this.mTwoPane = mTwoPane;
     }
 
@@ -77,8 +73,6 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
     @Override
     public int getItemCount(){
         return this.mValues != null ? this.mValues.size() : 0;
-        //return mValues.size();
-        //return 0;
     }
 
     @Override
@@ -102,31 +96,13 @@ public class BookListAdapter extends RecyclerView.Adapter<BookListAdapter.ViewHo
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        //private BookContent.BookItem mItem;
         private TextView mTitleView, mAuthorView;
-        //private View mView;
 
         public ViewHolder(View view) {
             super(view);
             mTitleView = view.findViewById(R.id.title);
             mAuthorView = view.findViewById(R.id.detail_author);
         }
-        /*
-        public TextView getmTitleView() {
-            return mTitleView;
-        }
-
-        public TextView getmAuthorView() {
-            return mAuthorView;
-        }
-
-        public View getmView() {
-            return mView;
-        }
-
-        public void setmAuthorView(TextView mAuthorView) {
-            this.mAuthorView = mAuthorView;
-        }*/
     }
 
 }

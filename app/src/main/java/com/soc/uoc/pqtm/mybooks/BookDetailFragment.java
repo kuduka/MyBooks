@@ -14,8 +14,6 @@ import com.soc.uoc.pqtm.mybooks.helper.ImageDownloaderTask;
 import com.soc.uoc.pqtm.mybooks.model.BookContent;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.List;
 
 
 public class BookDetailFragment extends Fragment {
@@ -31,9 +29,9 @@ public class BookDetailFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        ArrayList<BookContent.BookItem> lbooks = (ArrayList<BookContent.BookItem>) getArguments().getSerializable("lbooks");
         if (getArguments().containsKey(ARG_ITEM_ID)) {
-            mItem = lbooks.get(Integer.parseInt(getArguments().getString(ARG_ITEM_ID)));
+            int position = Integer.parseInt(getArguments().getString(ARG_ITEM_ID));
+            mItem = BookContent.getBooks().get(position);
             Activity activity = this.getActivity();
             CollapsingToolbarLayout appBarLayout = activity.findViewById(R.id.toolbar_layout);
             if (appBarLayout != null) {

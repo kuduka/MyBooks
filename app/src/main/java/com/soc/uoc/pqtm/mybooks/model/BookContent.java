@@ -1,19 +1,43 @@
 package com.soc.uoc.pqtm.mybooks.model;
 
-import java.io.Serializable;
+import com.orm.SugarApp;
+import com.orm.SugarRecord;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 
-public class BookContent implements Serializable {
+public class BookContent extends SugarApp {
+
+    public static List<BookItem> getBooks() {
+        return BookItem.listAll(BookItem.class);
+    }
+
+    public static boolean exists(BookItem bookItem) {
+
+        List<BookItem> list = getBooks();
+
+        if (!list.isEmpty()) {
+            List<BookItem> lbooks = BookItem.find(BookItem.class, "title = ? ", bookItem.getTitle());
+            if (!lbooks.isEmpty()) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        } else {
+            return false;
+        }
+    }
 
     public BookContent() {
 
     }
 
-    public static class BookItem implements Serializable{
-        /* Classe d'un llibre */
-        private Integer id;
+    public static class BookItem extends SugarRecord {
+
+        private Long id;
         private String title;
         private String author;
         private Date publication_date;
@@ -26,7 +50,7 @@ public class BookContent implements Serializable {
         public BookItem(String id, String title, String author, String publication_date, String description, String url_image) {
             try {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MM/yyyy");
-                this.id = Integer.parseInt(id);
+                this.id = Long.parseLong(id);
                 this.title = title;
                 this.author = author;
                 this.publication_date = dateFormat.parse(publication_date);
@@ -41,10 +65,6 @@ public class BookContent implements Serializable {
         @Override
         public String toString() {
             return this.getTitle();
-        }
-
-        public void setId(int id) {
-            this.id = id;
         }
 
         public void setTitle(String title) {
@@ -70,10 +90,6 @@ public class BookContent implements Serializable {
 
         public void setUrl_image(String url_image) {
             this.url_image = url_image;
-        }
-
-        public Integer getId() {
-            return this.id;
         }
 
         public String getTitle() {

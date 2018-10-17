@@ -11,7 +11,9 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
+import android.widget.Toast;
 
+import com.blankj.utilcode.util.NetworkUtils;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
@@ -22,8 +24,10 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.GenericTypeIndicator;
 import com.google.firebase.database.ValueEventListener;
+import com.orm.SugarContext;
 import com.soc.uoc.pqtm.mybooks.adapter.BookListAdapter;
 import com.soc.uoc.pqtm.mybooks.model.BookContent;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -32,7 +36,7 @@ public class BookListActivity extends AppCompatActivity {
     private static final String TAG = "LOG";
 
     private boolean mTwoPane;
-    BookListAdapter adapter;
+    private BookListAdapter adapter;
     private FirebaseAuth mAuth;
     private FirebaseDatabase database;
     private DatabaseReference myRef;
@@ -88,6 +92,8 @@ public class BookListActivity extends AppCompatActivity {
                             getBooks();
                         } else {
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
+                            Toast.makeText(BookListActivity.this, "*ERROR*: No s'ha pogut autenticar l'usuari.",
+                                    Toast.LENGTH_SHORT).show();
                         }
                     }
                 });
@@ -98,34 +104,55 @@ public class BookListActivity extends AppCompatActivity {
             public void onDataChange(DataSnapshot dataSnapshot) {
                 GenericTypeIndicator<ArrayList<BookContent.BookItem>> t = new GenericTypeIndicator<ArrayList<BookContent.BookItem>>() {};
                 mValues = dataSnapshot.getValue(t);
+
                 Iterator<BookContent.BookItem> iterBooks = mValues.iterator();
-                int bid = 0;
+                Long bid = 0L;
                 while (iterBooks.hasNext()) {
                     iterBooks.next().setId(bid);
                     bid++;
                 }
-                //adapter.setBooks(mValues);
+
+                for (BookContent.BookItem b : mValues) {
+                    if (!BookContent.exists(b)) {
+                        b.save();
+                    }
+                }
                 updateUI();
             }
 
             @Override
             public void onCancelled(DatabaseError error) {
                 // Failed to read value
+                Toast.makeText(BookListActivity.this, "*ERROR*: No s'ha pogut accedir a la BBDD.",
+                        Toast.LENGTH_SHORT).show();
                 Log.w(TAG, "Failed to read value.", error.toException());
+                if (!NetworkUtils.isAvailableByPing()){
+                    adapter.setItems(BookContent.getBooks());
+                }
             }
         });
     }
 
     private void updateUI (){
+        boolean warning = false;
         RecyclerView recyclerView = findViewById(R.id.book_list);
         adapter = new BookListAdapter(this,mValues, mTwoPane);
+        if (!NetworkUtils.isAvailableByPing()){
+            adapter.setItems(BookContent.getBooks());
+            warning = true;
+        }
         recyclerView.setAdapter(adapter);
+        if (warning) {
+            Toast.makeText(BookListActivity.this, "*ERROR* Sense Internet, carregant BBDD local",
+                    Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         getApplication().registerActivityLifecycleCallbacks(mCallbacks);
         super.onCreate(savedInstanceState);
+        SugarContext.init(this);
         setContentView(R.layout.activity_book_list);
         mAuth = FirebaseAuth.getInstance();
         database = FirebaseDatabase.getInstance();
@@ -148,10 +175,15 @@ public class BookListActivity extends AppCompatActivity {
         FirebaseAuth.AuthStateListener authStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
-                //firebaseAuth.getCurrentUser();
+                firebaseAuth.getCurrentUser();
             }
         };
         mAuth.addAuthStateListener(authStateListener);
-        doLogin();
+        if (!NetworkUtils.isAvailableByPing()) {
+            updateUI();
+        }
+        else {
+            doLogin();
+        }
     }
 }

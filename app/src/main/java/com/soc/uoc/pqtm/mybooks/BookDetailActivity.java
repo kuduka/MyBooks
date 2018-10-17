@@ -13,7 +13,6 @@ import android.view.MenuItem;
 
 import com.soc.uoc.pqtm.mybooks.model.BookContent;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 
 public class BookDetailActivity extends AppCompatActivity {
