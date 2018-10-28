@@ -2,5 +2,5 @@
     <string name="app_name">MyBooks</string>
     <string name="title_book_detail">Book Detail</string>
     <string name="default_notification_channel_id" translatable="false">fcm_default_channel</string>
-    <string name="fcm_message">FCM Message</string>
+    <string name="fcm_message">MyBooks Message</string>
 </resources>
