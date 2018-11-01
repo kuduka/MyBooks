@@ -10,6 +10,16 @@ import java.util.List;
 
 public class BookContent extends SugarApp {
 
+    public static boolean delete(Integer bookPos){
+        //delete book
+        BookItem del = BookItem.findById(BookItem.class,bookPos);
+        if (del != null){
+            del.delete();
+            return true;
+        }
+        return false;
+    }
+
     public static List<BookItem> getBooks() {
         return BookItem.listAll(BookItem.class);
     }
