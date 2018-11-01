@@ -222,7 +222,7 @@ public class BookListActivity extends AppCompatActivity {
             Integer ibookPos = Integer.valueOf(intent.getStringExtra(BOOK_POSITION));
             String bookPos = intent.getStringExtra(BOOK_POSITION);
             //Validate Book Position
-            if (ibookPos < 0 || ibookPos > mValues.size()) {
+            if (ibookPos < 0 || ibookPos > BookContent.getBooks().size()) {
                 Log.w(TAG, "Wrong book Position");
                 Toast.makeText(BookListActivity.this, "*ERROR* Book Position not valid",
                         Toast.LENGTH_SHORT).show();
@@ -257,7 +257,7 @@ public class BookListActivity extends AppCompatActivity {
                 } else {
                     //Small screen
                     Intent viewBookIntent = new Intent(getApplicationContext(), BookDetailActivity.class);
-                    viewBookIntent.putExtra(BookDetailFragment.ARG_ITEM_ID, intent.getStringExtra(bookPos));
+                    viewBookIntent.putExtra(BookDetailFragment.ARG_ITEM_ID, bookPos);
                     startActivity(viewBookIntent);
                 }
             }
