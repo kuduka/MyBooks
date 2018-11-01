@@ -2,8 +2,11 @@ package com.soc.uoc.pqtm.mybooks;
 
 import android.app.Activity;
 import android.app.Application;
+import android.app.NotificationManager;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.RecyclerView;
@@ -31,10 +34,14 @@ import com.soc.uoc.pqtm.mybooks.model.BookContent;
 
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 
 public class BookListActivity extends AppCompatActivity {
 
-    private static final String TAG = "LOG";
+    private static final String TAG = "LOGMYBOOK";
+    private static final String BOOK_POSITION = "BOOK_POSITION";
+    private static final String ACTION_DELETE = "ACTION_DELETE";
+    private static final String ACTION_VIEW = "ACTION_VIEW";
 
     private boolean mTwoPane;
     private BookListAdapter adapter;
@@ -83,7 +90,7 @@ public class BookListActivity extends AppCompatActivity {
         }
     }
 
-    private void  doLogin() {
+    private void doLogin() {
         mAuth.signInWithEmailAndPassword("marcfite@uoc.edu", "Palangana123!")
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -99,11 +106,14 @@ public class BookListActivity extends AppCompatActivity {
                     }
                 });
     }
-    public void getBooks(){
+
+    public void getBooks() {
         myRef.addValueEventListener(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
-                GenericTypeIndicator<ArrayList<BookContent.BookItem>> t = new GenericTypeIndicator<ArrayList<BookContent.BookItem>>() {};
+                Log.w(TAG, "Firebase data changed.");
+                GenericTypeIndicator<ArrayList<BookContent.BookItem>> t = new GenericTypeIndicator<ArrayList<BookContent.BookItem>>() {
+                };
                 mValues = dataSnapshot.getValue(t);
 
                 Iterator<BookContent.BookItem> iterBooks = mValues.iterator();
@@ -118,7 +128,7 @@ public class BookListActivity extends AppCompatActivity {
                         b.save();
                     }
                 }
-                updateUI();
+                updateUI(false);
             }
 
             @Override
@@ -127,20 +137,26 @@ public class BookListActivity extends AppCompatActivity {
                 Toast.makeText(BookListActivity.this, "*ERROR*: No s'ha pogut accedir a la BBDD.",
                         Toast.LENGTH_SHORT).show();
                 Log.w(TAG, "Failed to read value.", error.toException());
-                if (!NetworkUtils.isAvailableByPing()){
+                if (!NetworkUtils.isAvailableByPing()) {
                     adapter.setItems(BookContent.getBooks());
                 }
             }
         });
     }
 
-    private void updateUI (){
+    private void updateUI(boolean deleted) {
         boolean warning = false;
         RecyclerView recyclerView = findViewById(R.id.book_list);
-        adapter = new BookListAdapter(this,mValues, mTwoPane);
-        if (!NetworkUtils.isAvailableByPing()){
+        adapter = new BookListAdapter(this, mValues, mTwoPane);
+        if (deleted) {
+            //refresh list if book was deleted
             adapter.setItems(BookContent.getBooks());
-            warning = true;
+        }else {
+            if (!NetworkUtils.isAvailableByPing()) {
+                //if not inet show local database
+                adapter.setItems(BookContent.getBooks());
+                warning = true;
+            }
         }
         recyclerView.setAdapter(adapter);
         if (warning) {
@@ -191,10 +207,63 @@ public class BookListActivity extends AppCompatActivity {
         };
         mAuth.addAuthStateListener(authStateListener);
         if (!NetworkUtils.isAvailableByPing()) {
-            updateUI();
-        }
-        else {
+            updateUI(false);
+        } else {
             doLogin();
         }
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        //parse intent action
+        NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (intent.getAction() != null) {
+            Integer ibookPos = Integer.valueOf(intent.getStringExtra(BOOK_POSITION));
+            String bookPos = intent.getStringExtra(BOOK_POSITION);
+            //Validate Book Position
+            if (ibookPos < 0 || ibookPos > BookContent.getBooks().size()) {
+                Log.w(TAG, "Wrong book Position");
+                Toast.makeText(BookListActivity.this, "*ERROR* Book Position not valid",
+                        Toast.LENGTH_SHORT).show();
+                nm.cancelAll();
+                return;
+            }
+
+            if (intent.getAction().equalsIgnoreCase(ACTION_DELETE)) {
+                Log.w(TAG, "Intent ACTION_DELETE");
+
+                boolean aux = BookContent.delete(ibookPos);
+                if (aux) {
+                    Log.w(TAG, "Book Removed");
+                    updateUI(true); //Update UI from local DB
+                    Toast.makeText(BookListActivity.this, "Book deleted!",
+                            Toast.LENGTH_SHORT).show();
+                } else {
+                    Log.w(TAG, "Book _NOT_ Removed");
+                }
+            } else if (intent.getAction().equalsIgnoreCase(ACTION_VIEW)) {
+                Log.w(TAG, "Intent ACTION_VIEW");
+                if (mTwoPane) {
+                    //Large screen
+                    Bundle arguments = new Bundle();
+                    arguments.putString(BookDetailFragment.ARG_ITEM_ID, bookPos);
+                    BookDetailFragment fragment = new BookDetailFragment();
+                    fragment.setArguments(arguments);
+                    FragmentManager manager = getSupportFragmentManager();
+                    manager.beginTransaction()
+                            .replace(R.id.book_detail_container, fragment)
+                            .commit();
+                } else {
+                    //Small screen
+                    Intent viewBookIntent = new Intent(getApplicationContext(), BookDetailActivity.class);
+                    viewBookIntent.putExtra(BookDetailFragment.ARG_ITEM_ID, bookPos);
+                    startActivity(viewBookIntent);
+                }
+            }
+            //Cancel all notifications
+            nm.cancelAll();
+        }
+
     }
 }
