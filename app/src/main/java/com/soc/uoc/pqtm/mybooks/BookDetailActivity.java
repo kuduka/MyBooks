@@ -10,7 +10,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
-
 import com.soc.uoc.pqtm.mybooks.model.BookContent;
 
 import java.util.ArrayList;
@@ -37,6 +36,7 @@ public class BookDetailActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
 
         if (savedInstanceState == null) {
             Bundle arguments = new Bundle();

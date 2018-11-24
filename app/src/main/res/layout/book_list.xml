@@ -16,6 +16,5 @@
         app:layoutManager="LinearLayoutManager"
         tools:context=".BookListActivity"
         tools:listitem="@layout/book_list_content_even" >
-
     </android.support.v7.widget.RecyclerView>
 </android.support.v4.widget.SwipeRefreshLayout>
