@@ -1,15 +1,18 @@
 package com.soc.uoc.pqtm.mybooks;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.app.ActionBar;
 import android.support.v4.app.NavUtils;
 import android.view.MenuItem;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Toast;
 
 import com.soc.uoc.pqtm.mybooks.model.BookContent;
 
@@ -17,6 +20,7 @@ import java.util.ArrayList;
 
 public class BookDetailActivity extends AppCompatActivity {
 
+    private FloatingActionButton fab = null;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,12 +28,16 @@ public class BookDetailActivity extends AppCompatActivity {
         Toolbar toolbar =  findViewById(R.id.detail_toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = findViewById(R.id.fab);
+        fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own detail action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                //lliguem amb la webview, mostrem el form i desactivem el fab button
+                WebView webView = findViewById(R.id.web_view);
+                webView.setVisibility(View.VISIBLE);
+                webView.setWebViewClient(new MyBookWebClient());
+                webView.loadUrl("file:///android_asset/form.html");
+                fab.setVisibility(View.GONE);
             }
         });
 
@@ -37,6 +45,7 @@ public class BookDetailActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.setDisplayHomeAsUpEnabled(true);
         }
+
 
         if (savedInstanceState == null) {
             Bundle arguments = new Bundle();
@@ -61,4 +70,43 @@ public class BookDetailActivity extends AppCompatActivity {
         }
         return super.onOptionsItemSelected(item);
     }
+    class MyBookWebClient extends WebViewClient {
+        @Override
+        public boolean shouldOverrideUrlLoading(WebView view, String url) {
+            //Verifiquem tots els parámetres via GET
+            String name = Uri.parse(url).getQueryParameter("name");
+            String num = Uri.parse(url).getQueryParameter("num");
+            String date = Uri.parse(url).getQueryParameter("date");
+
+            Boolean error = false;
+            String msg = "";
+            //cap camp pot estar buit
+            if (name == "") {
+                msg += "*ERROR*: El nom no pot ser buit.\n";
+                error = true;
+            }
+            if (num == "") {
+                msg += "*ERROR*: El número no pot ser buit.\n";
+                error = true;
+            }
+            if (date == "") {
+                msg += "*ERROR*: La data no pot ser buida.\n";
+                error = true;
+            }
+
+            //si hi ha un error mostrem un missatge, si tot està bé, el llibre està comprat
+            if (!error) {
+                Toast.makeText(BookDetailActivity.this, "Llibre Comprat!",
+                        Toast.LENGTH_SHORT).show();
+                view.setVisibility(View.GONE);
+                fab.setVisibility(View.VISIBLE);
+                return true;
+            }
+            else{
+                Toast.makeText(BookDetailActivity.this, msg, Toast.LENGTH_SHORT).show();
+                return false;
+            }
+        }
+    }
+
 }
