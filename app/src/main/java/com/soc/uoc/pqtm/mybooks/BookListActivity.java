@@ -1,10 +1,19 @@
 package com.soc.uoc.pqtm.mybooks;
 
+import android.Manifest;
 import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationManager;
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.Environment;
+import android.os.StrictMode;
 import android.support.annotation.NonNull;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -40,10 +49,12 @@ import com.mikepenz.materialdrawer.model.interfaces.IProfile;
 import com.orm.SugarContext;
 import com.soc.uoc.pqtm.mybooks.adapter.BookListAdapter;
 import com.soc.uoc.pqtm.mybooks.model.BookContent;
-
+import com.vistrav.ask.Ask;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.List;
 
 public class BookListActivity extends AppCompatActivity {
 
@@ -174,6 +185,75 @@ public class BookListActivity extends AppCompatActivity {
         }
     }
 
+    private void checkPerms() {
+        //change policy for reading files and ask permission to write files to  storage
+        StrictMode.VmPolicy.Builder builder = new StrictMode.VmPolicy.Builder();
+        StrictMode.setVmPolicy(builder.build());
+
+        //grant permissions if needed
+        Ask.on(this)
+                .id(1) // in case you are invoking multiple time Ask from same activity or fragment
+                .forPermissions(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                .withRationales("In order to share images through your apps we need your permission")
+                .go();
+
+    }
+
+    private Intent createIntent() {
+        Bitmap bitmap= BitmapFactory.decodeResource(getResources(),R.drawable.icon);
+        String path = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)+"/MyBooks.jpg";
+        OutputStream out = null;
+        File file=new File(path);
+        try {
+            out = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, out);
+            out.flush();
+            out.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        path=file.getPath();
+        Uri bmpUri = Uri.parse("file://"+path);
+        Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+        String shareBodyText = "Aplicació Android sobre llibres";
+        intent.putExtra(android.content.Intent.EXTRA_SUBJECT, "APP MyBooks");
+        intent.putExtra(android.content.Intent.EXTRA_TEXT, shareBodyText);
+        intent.putExtra(Intent.EXTRA_STREAM, bmpUri);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        intent.setType("image/*");
+        return intent;
+    }
+    private void shareApps() {
+        //share image/text via apps
+        Intent intent = createIntent();
+        checkPerms();
+        startActivity(Intent.createChooser(intent, "Choose app:"));
+    }
+
+    private void copyClipboard() {
+        //get clipboard service and copy content
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("MyBooks", "Aplicació Android sobre llibres.");
+        clipboard.setPrimaryClip(clip);
+        //warn user that text has been copied
+        Toast.makeText(BookListActivity.this, "Contingut copiat al portapapers",
+                Toast.LENGTH_SHORT).show();
+    }
+    private void shareWhatsapp() {
+        //share image/text via whatsapp
+        checkPerms();
+        Intent intent = createIntent();
+        //set default app to whatsapp
+        intent.setPackage("com.whatsapp");
+        try {
+            startActivity(intent);
+        } catch (android.content.ActivityNotFoundException ex) {
+            //show error if not installed
+            Toast.makeText(BookListActivity.this, "WhatsApp not installed!",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         getApplication().registerActivityLifecycleCallbacks(mCallbacks);
@@ -226,6 +306,14 @@ public class BookListActivity extends AppCompatActivity {
                     @Override
                     public boolean onItemClick(View view, int position, IDrawerItem drawerItem) {
                         // do something with the clicked item :D
+                        int option = ((int) drawerItem.getIdentifier());
+                        if(option == 1){
+                            shareApps();
+                        } else if (option == 2){
+                            copyClipboard();
+                        } else if (option == 3){
+                            shareWhatsapp();
+                        }
                         return true;
                     }
                 })
