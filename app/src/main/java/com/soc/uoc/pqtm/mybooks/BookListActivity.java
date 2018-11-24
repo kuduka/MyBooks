@@ -42,6 +42,7 @@ import com.mikepenz.materialdrawer.AccountHeaderBuilder;
 import com.mikepenz.materialdrawer.Drawer;
 import com.mikepenz.materialdrawer.DrawerBuilder;
 import com.mikepenz.materialdrawer.model.DividerDrawerItem;
+import com.mikepenz.materialdrawer.model.PrimaryDrawerItem;
 import com.mikepenz.materialdrawer.model.ProfileDrawerItem;
 import com.mikepenz.materialdrawer.model.SecondaryDrawerItem;
 import com.mikepenz.materialdrawer.model.interfaces.IDrawerItem;
@@ -273,13 +274,22 @@ public class BookListActivity extends AppCompatActivity {
         SecondaryDrawerItem subItem2 = new SecondaryDrawerItem().withIdentifier(2).withName("Copy to clipboard");
         SecondaryDrawerItem subItem3 = new SecondaryDrawerItem().withIdentifier(3).withName("Share in Whatsapp");
 
+        //creem el profile
+        IProfile profile = new ProfileDrawerItem()
+                .withName("Marc Fite")
+                .withEmail("marc@fite.su")
+                .withIcon(Uri.parse("https://avatars3.githubusercontent.com/u/887462?v=3&s=460"))
+                .withIdentifier(1);
+
+
         //creem la capcalera del menu lateral
 
         AccountHeader headerResult = new AccountHeaderBuilder()
                 .withActivity(this)
-                //.withHeaderBackground(R.drawable.ic_launcher_background)
+                .withHeaderBackground(R.drawable.header)
+                .withTranslucentStatusBar(false)
                 .addProfiles(
-                        new ProfileDrawerItem().withName("Marc Fite").withEmail("marc@fite.su").withIcon(getResources().getDrawable(R.drawable.material_drawer_badge))
+                        profile
                 )
                 .withOnAccountHeaderListener(new AccountHeader.OnAccountHeaderListener() {
                     @Override
@@ -292,6 +302,7 @@ public class BookListActivity extends AppCompatActivity {
         //creem el menu lateral
         Drawer result = new DrawerBuilder()
                 .withAccountHeader(headerResult)
+                .withTranslucentStatusBar(false)
                 .withActivity(this)
                 .withToolbar(toolbar)
                 .addDrawerItems(
